@@ -16,6 +16,7 @@ const helmet = require("helmet");
 const { xss } = require("express-xss-sanitizer");
 
 // middlewares
+// set up express static (as first middleware) to serve static assets from client build
 app.use(express.static(path.resolve(__dirname, "./client/build")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +28,8 @@ app.use(xss());
 // routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", authMiddleware, jobsRoutes);
+// serve index.html for all routes (apart from API)
+// front-end routes pick it up form here
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "./client/build", "index.html"));
 });
