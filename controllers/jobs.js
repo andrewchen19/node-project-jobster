@@ -2,8 +2,7 @@ const Job = require("../models/Job");
 const { jobValidation } = require("../validation");
 
 const mongoose = require("mongoose");
-const moment = require("moment");
-// const dayjs = require("dayjs");
+const dayjs = require("dayjs");
 
 const getAllJobs = async (req, res) => {
   try {
@@ -11,7 +10,7 @@ const getAllJobs = async (req, res) => {
 
     // protected routes (User 只能看到自己所創建的資料)
     const queryObject = {
-      createdBy: new mongoose.Types.ObjectId(req.user.userId),
+      createdBy: req.user.userId,
     };
 
     if (search) {
@@ -167,76 +166,63 @@ const deleteJob = async (req, res) => {
   }
 };
 
-// const showStats = async (req, res) => {
-//   // aggregation pipeline
-//   let stats = await Job.aggregate([
-//     // Step 1：Filter Job collection's documents by createdBy
-//     // we need mongoose object (not just general string)
-//     { $match: { createdBy: new mongoose.Types.ObjectId(req.user.userId) } },
-//     // Step 2：Group remaining documents by status and calculate total quantity
-//     { $group: { _id: "$status", count: { $sum: 1 } } },
-//   ]);
-
-//   console.log(stats);
-
-//   // reduce() -> return the sum of all the elements in an array
-//   stats = stats.reduce((total, item) => {
-//     // total 一開始是 initialValue -> {}
-//     const { _id: title, count } = item;
-
-//     total[title] = count;
-
-//     return total;
-//   }, {});
-
-//   console.log(stats);
-
-//   res.status(200).json({ defaultStats: {}, monthlyApplications: [] });
-// };
-
 const showStats = async (req, res) => {
+  // aggregation pipeline
   let stats = await Job.aggregate([
+    // Step 1：Filter Job collection's documents by createdBy
+    // we need mongoose object (not just general string)
     { $match: { createdBy: new mongoose.Types.ObjectId(req.user.userId) } },
+    // Step 2：Group remaining documents by status and calculate total quantity
     { $group: { _id: "$status", count: { $sum: 1 } } },
   ]);
+  console.log(stats);
 
-  stats = stats.reduce((acc, curr) => {
-    const { _id: title, count } = curr;
-    acc[title] = count;
-    return acc;
+  // reduce() -> return the sum of all the elements in an array
+  stats = stats.reduce((total, item) => {
+    // total 一開始是 initialValue -> {}
+    const { _id: title, count } = item;
+
+    total[title] = count;
+
+    return total;
   }, {});
+  console.log(stats);
 
   const defaultStats = {
-    pending: stats.pending || 0,
     interview: stats.interview || 0,
+    pending: stats.pending || 0,
     declined: stats.declined || 0,
   };
 
+  // aggregation pipeline
   let monthlyApplications = await Job.aggregate([
-    { $match: { createdBy: mongoose.Types.ObjectId(req.user.userId) } },
+    { $match: { createdBy: new mongoose.Types.ObjectId(req.user.userId) } },
     {
       $group: {
         _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
         count: { $sum: 1 },
       },
     },
+    // Step 3：Sort documents by year & month in descending order (降序，由大到小)
     { $sort: { "_id.year": -1, "_id.month": -1 } },
+    // Step 4：limit the number of documents we want
     { $limit: 6 },
   ]);
+  console.log(monthlyApplications);
 
-  monthlyApplications = monthlyApplications
-    .map((item) => {
-      const {
-        _id: { year, month },
-        count,
-      } = item;
-      const date = moment()
-        .month(month - 1)
-        .year(year)
-        .format("MMM Y");
-      return { date, count };
-    })
-    .reverse();
+  monthlyApplications = monthlyApplications.map((item) => {
+    const {
+      _id: { year, month },
+      count,
+    } = item;
+
+    const date = dayjs(`${year}-${month}-01`).format("MMM YYYY");
+
+    return { date, count };
+  });
+  console.log(monthlyApplications);
+
+  monthlyApplications = monthlyApplications.reverse();
 
   res.status(200).json({ defaultStats, monthlyApplications });
 };
