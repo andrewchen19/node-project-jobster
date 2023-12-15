@@ -1,9 +1,9 @@
 const express = require("express");
 const app = express();
 
-const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/auth_routes");
 const authMiddleware = require("./middleware/auth");
-const jobsRoutes = require("./routes/jobs");
+const jobsRoutes = require("./routes/jobs_routes");
 const notFound = require("./middleware/not-found");
 const connectDB = require("./db/connect");
 require("dotenv").config();
