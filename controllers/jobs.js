@@ -67,8 +67,9 @@ const getAllJobs = async (req, res) => {
 };
 
 const getJob = async (req, res) => {
+  const { _id } = req.params;
+
   try {
-    const { _id } = req.params;
     // 沒找到特定的資料時， return null
     const job = await Job.findOne(req.params);
 
@@ -79,7 +80,12 @@ const getJob = async (req, res) => {
 
     res.status(200).json({ job });
   } catch (error) {
-    res.status(500).json({ msg: error });
+    if (error.name === "CastError") {
+      // Not Found
+      return res.status(404).json({ msg: `No job with id: ${_id}` });
+    } else {
+      res.status(500).json({ msg: error });
+    }
   }
 };
 
@@ -122,9 +128,9 @@ const updateJob = async (req, res) => {
     return res.status(400).json({ error: error.details[0].message });
   }
 
-  try {
-    const { _id } = req.params;
+  const { _id } = req.params;
 
+  try {
     // 沒找到特定的資料時， return null
     const job = await Job.findOneAndUpdate(req.params, req.body, {
       runValidators: true,
@@ -138,7 +144,12 @@ const updateJob = async (req, res) => {
 
     res.status(200).json({ job });
   } catch (error) {
-    res.status(500).json({ msg: error });
+    if (error.name === "CastError") {
+      // Not Found
+      return res.status(404).json({ msg: `No job with id: ${_id}` });
+    } else {
+      res.status(500).json({ msg: error });
+    }
   }
 };
 
@@ -149,9 +160,9 @@ const deleteJob = async (req, res) => {
     return res.status(400).json({ msg: "Demo User. Read only!" });
   }
 
-  try {
-    const { _id } = req.params;
+  const { _id } = req.params;
 
+  try {
     // 沒找到特定的資料時， return null
     const job = await Job.findOneAndDelete(req.params);
 
@@ -162,7 +173,12 @@ const deleteJob = async (req, res) => {
 
     res.status(200).json({ msg: "Delete Successful" });
   } catch (error) {
-    res.status(500).json({ msg: error });
+    if (error.name === "CastError") {
+      // Not Found
+      return res.status(404).json({ msg: `No job with id: ${_id}` });
+    } else {
+      res.status(500).json({ msg: error });
+    }
   }
 };
 
