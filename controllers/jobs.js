@@ -170,7 +170,7 @@ const showStats = async (req, res) => {
   // aggregation pipeline
   let stats = await Job.aggregate([
     // Step 1：Filter Job collection's documents by createdBy
-    // we need mongoose object (not just general string)
+    // we need pass an mongoose object (not just general string)
     { $match: { createdBy: new mongoose.Types.ObjectId(req.user.userId) } },
     // Step 2：Group remaining documents by status and calculate total quantity
     { $group: { _id: "$status", count: { $sum: 1 } } },
