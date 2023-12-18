@@ -85,8 +85,7 @@ const jobValidation = (data) => {
         "any.only":
           "Job type must be one of: full-time, part-time, remote, internship",
       }),
-    jobLocation: Joi.string().required().default("my city").messages({
-      "any.required": "Job location must be provided",
+    jobLocation: Joi.string().default("my city").messages({
       "string.empty": "Job location cannot be empty",
     }),
   });
