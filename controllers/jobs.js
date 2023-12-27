@@ -232,7 +232,7 @@ const showStats = async (req, res) => {
       count,
     } = item;
 
-    const date = dayjs(`${year}-${month}-01`).format("MMM YYYY");
+    const date = dayjs(`${year}-${month}`).format("MMM YYYY");
 
     return { date, count };
   });
